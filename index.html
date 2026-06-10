@@ -50,10 +50,16 @@
     border-bottom:1px solid var(--line)}
   .statusbar .dot{display:inline-block;width:6px;height:6px;border-radius:50%;
     background:var(--cyan);margin-right:7px;vertical-align:middle;
-    box-shadow:0 0 8px var(--cyan)}
+    box-shadow:0 0 8px var(--cyan); animation: pulse 2s infinite;}
   .statusbar b{color:var(--ice);font-weight:400}
-  .statusbar .right{color:var(--mute)}
+  .statusbar .right{color:var(--mute); display:flex; gap: 12px;}
   @media(max-width:620px){.statusbar .right{display:none}}
+
+  @keyframes pulse {
+    0% { opacity: 1; box-shadow: 0 0 8px var(--cyan); }
+    50% { opacity: 0.5; box-shadow: 0 0 2px var(--cyan); }
+    100% { opacity: 1; box-shadow: 0 0 8px var(--cyan); }
+  }
 
   /* ---------- depth telemetry rail ---------- */
   .rail{position:fixed;left:0;top:0;height:100vh;width:78px;z-index:40;
@@ -233,7 +239,9 @@
 
 <div class="statusbar">
   <div><span class="dot"></span><b>Arctic Observation</b> &nbsp;·&nbsp; Climate Feedback Study</div>
-  <div class="right">Lat 78.9&deg;N &nbsp; Lon 11.9&deg;E &nbsp;·&nbsp; Sea-ice extent: declining</div>
+  <div class="right" id="live-weather">
+    <span>Connecting to Arctic sensors...</span>
+  </div>
 </div>
 
 <div class="rail" aria-hidden="true">
@@ -242,7 +250,6 @@
   <div class="rail-read"><b id="depthval">0</b>metres</div>
 </div>
 
-<!-- ============ HERO ============ -->
 <header class="hero" id="top">
   <div class="scene" aria-hidden="true">
     <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
@@ -273,33 +280,25 @@
 
       <rect width="1440" height="520" fill="url(#sky)"/>
       <rect width="1440" height="900" y="0" fill="url(#sun)"/>
-      <!-- distant shelf -->
       <path d="M0 470 L210 452 L360 470 L560 448 L760 470 L980 455 L1200 470 L1440 458 L1440 520 L0 520 Z"
             fill="#16384F" opacity="0.6"/>
-      <!-- ocean -->
       <rect y="520" width="1440" height="380" fill="url(#sea)"/>
-      <!-- water shimmer lines -->
       <g stroke="#5FD0DE" stroke-width="1" class="shimmer">
         <line x1="120" y1="560" x2="430" y2="560" opacity="0.5"/>
         <line x1="900" y1="585" x2="1230" y2="585" opacity="0.4"/>
         <line x1="520" y1="615" x2="760" y2="615" opacity="0.3"/>
       </g>
 
-      <!-- main iceberg -->
       <g class="berg">
-        <!-- submerged mass -->
         <path d="M610 520 L470 760 L560 860 L820 880 L960 720 L880 520 Z" fill="url(#iceLow)" opacity="0.55"/>
         <path d="M880 520 L960 720 L820 880 L880 760 Z" fill="#2C5C77" opacity="0.5"/>
-        <!-- above water -->
         <path d="M600 520 L660 360 L720 430 L790 330 L860 520 Z" fill="url(#iceTop)"/>
         <path d="M790 330 L860 520 L760 520 Z" fill="#AECDDD" opacity="0.7"/>
         <path d="M660 360 L600 520 L690 520 Z" fill="#D7E8F1"/>
-        <!-- drips -->
         <ellipse class="drip"  cx="640" cy="522" rx="3" ry="5" fill="#9FD2DE"/>
         <ellipse class="drip2" cx="820" cy="522" rx="3" ry="5" fill="#9FD2DE"/>
       </g>
 
-      <!-- second smaller berg -->
       <g class="berg2">
         <path d="M1050 520 L1010 660 L1110 720 L1230 660 L1200 520 Z" fill="url(#iceLow)" opacity="0.4"/>
         <path d="M1060 520 L1095 430 L1140 470 L1180 420 L1210 520 Z" fill="url(#iceTop)"/>
@@ -321,10 +320,9 @@
   </div>
 </header>
 
-<!-- ============ PROBLEM ============ -->
 <section id="problem">
   <div class="wrap">
-    <div class="fig rise">Fig. 01 — The problem</div>
+    <div class="fig rise">Fig. 01: The problem</div>
     <h2 class="rise">What the loop is, and where it happens</h2>
     <p class="rise lead">An Arctic feedback loop is a cycle where warming causes changes that lead to even more warming.</p>
     <p class="rise">It begins with reflection. Snow and ice are bright, so they send most of the sunlight that hits them back out to space. As they melt, they uncover the much darker land and ocean underneath, and those darker surfaces absorb the sunlight as heat instead. That heat melts more ice, which uncovers more dark surface, which absorbs more heat. Each turn of the cycle makes the next one a little easier.</p>
@@ -344,10 +342,9 @@
   </div>
 </section>
 
-<!-- ============ MECHANISM ============ -->
 <section class="band" id="loop">
   <div class="wrap">
-    <div class="fig rise">Fig. 02 — The mechanism</div>
+    <div class="fig rise">Fig. 02: The mechanism</div>
     <h2 class="rise">The ice-albedo loop, step by step</h2>
     <div class="loopwrap">
       <div class="rise">
@@ -391,10 +388,9 @@
   </div>
 </section>
 
-<!-- ============ DISCIPLINES ============ -->
 <section id="science">
   <div class="wrap">
-    <div class="fig rise">Fig. 03 — Three sciences</div>
+    <div class="fig rise">Fig. 03: Three sciences</div>
     <h2 class="rise">One problem, read three ways</h2>
     <p class="rise">No single subject explains the Arctic on its own. Biology shows how the damage spreads through living things, chemistry explains why the gases trap heat, and physics explains the light and energy that start the whole process and gives us the tools to watch it.</p>
 
@@ -429,16 +425,15 @@
   </div>
 </section>
 
-<!-- ============ ACTION PLAN ============ -->
 <section class="band" id="action">
   <div class="wrap">
-    <div class="fig rise">Fig. 04 — The action plan</div>
+    <div class="fig rise">Fig. 04: The action plan</div>
     <h2 class="rise">Two actions, one for each loop</h2>
     <p class="rise">The plan works on both feedback loops at the same time. One action restores the Arctic&rsquo;s reflectivity, and the other keeps its buried carbon frozen. Neither one replaces cutting emissions. They are meant to slow things down while that harder work goes on.</p>
 
     <div class="actions">
       <div class="action rise">
-        <div class="idx">Action 01 — Ice-albedo loop</div>
+        <div class="idx">Action 01: Ice-albedo loop</div>
         <h3>Project Cryo-Reflect</h3>
         <p>Spread a thin layer of tiny hollow glass beads, made from silica, across young and thin sea ice. The beads reflect sunlight back toward space before the dark water beneath can absorb it. In effect, they replace some of the reflective surface the Arctic is losing.</p>
         <span class="sub">Why it works</span>
@@ -447,7 +442,7 @@
         <p>Treated areas should hold their ice longer through summer and give it a chance to thicken, with satellites measuring the difference. It is a regional measure, not a cure.</p>
       </div>
       <div class="action rise">
-        <div class="idx">Action 02 — Permafrost-carbon loop</div>
+        <div class="idx">Action 02: Permafrost-carbon loop</div>
         <h3>Keeping the ground frozen</h3>
         <p>Use living systems to protect the permafrost. Large grazing animals like reindeer and musk oxen pack down the winter snow, which lets the cold reach the soil. Protecting and rewetting peatlands keeps their soil waterlogged so the carbon inside stays locked away.</p>
         <span class="sub">Why it works</span>
@@ -458,8 +453,8 @@
     </div>
 
     <div class="timeline">
-      <div class="phase rise"><div class="when">0&ndash;2 years<span>Short term</span></div><p>Run small, carefully monitored bead trials with full environmental safety testing, and protect the peatlands that are still intact before they can be drained.</p></div>
-      <div class="phase rise"><div class="when">2&ndash;5 years<span>Medium term</span></div><p>If the trials are safe and they work, expand them with automated systems, grow the herbivore projects, and start rewetting drained peatlands, comparing treated areas with untreated ones by satellite.</p></div>
+      <div class="phase rise"><div class="when">0-2 years<span>Short term</span></div><p>Run small, carefully monitored bead trials with full environmental safety testing, and protect the peatlands that are still intact before they can be drained.</p></div>
+      <div class="phase rise"><div class="when">2-5 years<span>Medium term</span></div><p>If the trials are safe and they work, expand them with automated systems, grow the herbivore projects, and start rewetting drained peatlands, comparing treated areas with untreated ones by satellite.</p></div>
       <div class="phase rise"><div class="when">5+ years<span>Long term</span></div><p>Tie everything to a shift toward renewable energy that cuts emissions and black carbon, so reflectivity, permafrost, and clean power all support each other.</p></div>
     </div>
 
@@ -470,10 +465,9 @@
   </div>
 </section>
 
-<!-- ============ REFLECTION ============ -->
 <section id="reflection">
   <div class="wrap reflect">
-    <div class="fig rise">Fig. 05 — Reflection</div>
+    <div class="fig rise">Fig. 05: Reflection</div>
     <h2 class="rise">What we took away</h2>
     <p class="rise lead">The biggest thing we learned is that no single subject could explain this problem by itself, and that the most honest plans are the ones that admit what they cannot do.</p>
     <div class="rise">
@@ -498,28 +492,76 @@
 </footer>
 
 <script>
-  const io=new IntersectionObserver((es)=>{
-    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
-  },{threshold:.14,rootMargin:'0px 0px -7% 0px'});
-  document.querySelectorAll('.rise:not(.in)').forEach(el=>io.observe(el));
+  // Fade in animation
+  const io = new IntersectionObserver((es) => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: .14, rootMargin: '0px 0px -7% 0px' });
+  document.querySelectorAll('.rise:not(.in)').forEach(el => io.observe(el));
 
-  const dot=document.getElementById('dot');
-  const rail=document.getElementById('rail');
-  const read=document.getElementById('depthval');
-  const MAX_DEPTH=1240;
-  let ticking=false;
-  function tick(){
-    ticking=false;
-    const h=document.documentElement;
-    const p=Math.min(1,Math.max(0,h.scrollTop/((h.scrollHeight-h.clientHeight)||1)));
-    if(rail) dot.style.top=(p*rail.offsetHeight)+'px';
-    read.textContent=Math.round(p*MAX_DEPTH);
+  // Depth telemetry rail
+  const dot = document.getElementById('dot');
+  const rail = document.getElementById('rail');
+  const read = document.getElementById('depthval');
+  const MAX_DEPTH = 1240;
+  let ticking = false;
+
+  function tick() {
+    ticking = false;
+    const h = document.documentElement;
+    const p = Math.min(1, Math.max(0, h.scrollTop / ((h.scrollHeight - h.clientHeight) || 1)));
+    if (rail) dot.style.top = (p * rail.offsetHeight) + 'px';
+    if (read) read.innerText = Math.round(p * MAX_DEPTH);
   }
-  addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(tick);ticking=true;}},{passive:true});
-  addEventListener('resize',tick);
-  if(rail){for(let i=1;i<8;i++){const t=document.createElement('div');t.className='rail-tick';t.style.top=(i*12.5)+'%';rail.appendChild(t);}}
-  tick();
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(tick);
+      ticking = true;
+    }
+  });
+  tick(); // Run once on load
+
+  // --- NEW PROFESSIONAL API ADDITION ---
+  // Using Open-Meteo to fetch live weather data for Longyearbyen, Svalbard (High Arctic)
+  // This is a free, open-source weather API that does not require a key.
+  async function fetchArcticWeather() {
+    const weatherContainer = document.getElementById('live-weather');
+    try {
+      // Fetching current weather data (temperature and windspeed)
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=78.22&longitude=15.65&current_weather=true');
+      
+      if (!res.ok) throw new Error('Weather data unavailable');
+      
+      const data = await res.json();
+      const temp = data.current_weather.temperature;
+      const wind = data.current_weather.windspeed;
+      
+      // Update the status bar with the live data
+      weatherContainer.innerHTML = `
+        <span>Svalbard Station (78.2&deg;N 15.6&deg;E)</span> 
+        <span>&middot;</span> 
+        <span>Temp: ${temp}&deg;C</span> 
+        <span>&middot;</span> 
+        <span>Wind: ${wind} km/h</span>
+      `;
+    } catch (e) {
+      // Fallback in case the API is blocked or down
+      console.error(e);
+      weatherContainer.innerHTML = `
+        <span>Lat 78.9&deg;N &nbsp; Lon 11.9&deg;E</span>
+        <span>&middot;</span>
+        <span>Sea-ice extent: declining</span>
+      `;
+    }
+  }
+
+  // Call the function on load
+  fetchArcticWeather();
 </script>
 </body>
 </html>
-
