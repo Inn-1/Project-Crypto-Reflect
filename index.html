@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 <style>
   :root{
     --void:#06121F;
@@ -122,21 +126,17 @@
     font-size:1.7rem;font-weight:800;letter-spacing:-.02em;margin-bottom:2px}
   .readouts span b small{font-size:.95rem;font-weight:600}
 
-  /* ---------- scales table ---------- */
-  .scales{border:1px solid var(--line);margin-top:6px}
-  .scale{display:grid;grid-template-columns:150px 1fr;gap:0;
-    border-bottom:1px solid var(--line)}
-  .scale:last-child{border-bottom:none}
-  .scale .where{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--cyan);padding:22px 22px;
-    border-right:1px solid var(--line);background:rgba(95,208,222,.03)}
-  .scale .what{padding:22px 24px;color:var(--text);font-size:1rem}
-  @media(max-width:640px){.scale{grid-template-columns:1fr}
-    .scale .where{border-right:none;border-bottom:1px solid var(--line);padding-bottom:8px}
-    .scale .what{padding-top:14px}}
+  /* ---------- interactive map (Replaces static table) ---------- */
+  .map-wrapper {margin-top: 36px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--panel); position: relative; z-index: 10;}
+  #polar-map { height: 420px; width: 100%; background: var(--void); }
+  .leaflet-popup-content-wrapper { background: var(--ocean2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
+  .leaflet-popup-tip { background: var(--ocean2); border: 1px solid var(--line); border-top: none; border-left: none; }
+  .leaflet-popup-content b { color: var(--cyan); display: block; margin-bottom: 6px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.75rem; }
+  .leaflet-popup-content p { font-size: 0.95rem; margin-bottom: 0; font-family: var(--body); }
+  .pulse-marker { background: var(--cyan); border-radius: 50%; box-shadow: 0 0 12px var(--cyan); border: 2px solid #fff; }
 
   /* ---------- impacts ---------- */
-  .impacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:10px}
+  .impacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:46px}
   .impact{padding-top:18px;border-top:2px solid var(--cyan)}
   .impact h3{font-size:1.08rem;margin-bottom:7px}
   .impact p{font-size:.96rem;color:var(--mute);margin-bottom:0;line-height:1.62}
@@ -238,7 +238,7 @@
 <body>
 
 <div class="statusbar">
-  <div><span class="dot"></span><b>Arctic Observation</b> &nbsp;·&nbsp; Climate Feedback Study</div>
+  <div><span class="dot"></span><b>Arctic Observation</b> &nbsp;&middot;&nbsp; Climate Feedback Study</div>
   <div class="right" id="live-weather">
     <span>Connecting to Arctic sensors...</span>
   </div>
@@ -326,15 +326,13 @@
     <h2 class="rise">What the loop is, and where it happens</h2>
     <p class="rise lead">An Arctic feedback loop is a cycle where warming causes changes that lead to even more warming.</p>
     <p class="rise">It begins with reflection. Snow and ice are bright, so they send most of the sunlight that hits them back out to space. As they melt, they uncover the much darker land and ocean underneath, and those darker surfaces absorb the sunlight as heat instead. That heat melts more ice, which uncovers more dark surface, which absorbs more heat. Each turn of the cycle makes the next one a little easier.</p>
-    <p class="rise">Melting ice is not the only cause. Thawing permafrost, extra water vapour in the air, and the release of greenhouse gases all add heat to the same loop. The problem is happening at three scales at once.</p>
+    <p class="rise">Melting ice is not the only cause. Thawing permafrost, extra water vapour in the air, and the release of greenhouse gases all add heat to the same loop. The problem is happening at three scales at once. Select a marker on the map to explore.</p>
 
-    <div class="scales rise">
-      <div class="scale"><div class="where">Local</div><div class="what">Along Arctic coastlines, the Beaufort Sea, and the Greenland Ice Sheet, reflective ice and glaciers melt and expose the dark ocean and bare ground beneath them.</div></div>
-      <div class="scale"><div class="where">Regional</div><div class="what">Permafrost thaws across northern Canada, Alaska, and Russia. As the frozen ground decays, it releases large amounts of carbon dioxide and methane.</div></div>
-      <div class="scale"><div class="where">Global</div><div class="what">The Arctic warms about four times faster than the rest of the planet, and that imbalance changes weather and ocean patterns far beyond the poles.</div></div>
+    <div class="map-wrapper rise">
+      <div id="polar-map"></div>
     </div>
 
-    <div class="impacts" style="margin-top:46px">
+    <div class="impacts">
       <div class="impact rise"><h3>Ecosystems</h3><p>Melting ice destroys habitat for polar bears and seals and removes the ice algae that the whole marine food web is built on. Thawing permafrost also releases methane, which traps far more heat than carbon dioxide in the short term.</p></div>
       <div class="impact rise"><h3>People</h3><p>For Arctic Indigenous communities, losing stable ice threatens hunting and travel routes that have been used for generations. Further away, the meltwater raises sea levels, and the people most at risk often did the least to cause the warming.</p></div>
       <div class="impact rise"><h3>Technology</h3><p>Geoengineering ideas like Project Cryo-Reflect could help, but they are hard to build at scale. There is also a risk that a promising technology becomes an excuse to stop cutting emissions, which is the real problem.</p></div>
@@ -417,7 +415,7 @@
         <div class="disc-key">Physics<span>Light &amp; optics</span></div>
         <div class="disc-body">
           <h3>Measuring and bending the light</h3>
-          <p>Optics is how we keep watch on the loop. Satellites like the European Space Agency&rsquo;s Sentinel-3 track how the Arctic&rsquo;s reflectivity is changing, and the GRACE-FO mission uses lasers to measure the Greenland Ice Sheet losing mass.</p>
+          <p>Optics is how we keep watch on the loop. Satellites like the European Space Agency's Sentinel-3 track how the Arctic's reflectivity is changing, and the GRACE-FO mission uses lasers to measure the Greenland Ice Sheet losing mass.</p>
           <p>Optics also offers a way to act. Spreading reflective silica over thin ice raises its albedo, and on land, solar thermal collectors, solar panels, and a renewable grid cut the emissions that drive the warming in the first place.</p>
         </div>
       </div>
@@ -429,7 +427,7 @@
   <div class="wrap">
     <div class="fig rise">Fig. 04: The action plan</div>
     <h2 class="rise">Two actions, one for each loop</h2>
-    <p class="rise">The plan works on both feedback loops at the same time. One action restores the Arctic&rsquo;s reflectivity, and the other keeps its buried carbon frozen. Neither one replaces cutting emissions. They are meant to slow things down while that harder work goes on.</p>
+    <p class="rise">The plan works on both feedback loops at the same time. One action restores the Arctic's reflectivity, and the other keeps its buried carbon frozen. Neither one replaces cutting emissions. They are meant to slow things down while that harder work goes on.</p>
 
     <div class="actions">
       <div class="action rise">
@@ -476,7 +474,7 @@
       <span class="q">What was difficult</span>
       <p>A lot of the science is still uncertain. The silica beads are experimental, and no one fully knows yet whether they could harm marine life, so it was hard to write about them with much confidence. It was also tempting to treat one idea as the whole answer, which it is not.</p>
       <span class="q">What we realised</span>
-      <p>The solutions that make the most sense work with the Arctic&rsquo;s natural systems instead of fighting them. We also saw how easily a new technology can become a reason to stop cutting emissions, when cutting emissions is still the most important thing we can do.</p>
+      <p>The solutions that make the most sense work with the Arctic's natural systems instead of fighting them. We also saw how easily a new technology can become a reason to stop cutting emissions, when cutting emissions is still the most important thing we can do.</p>
       <span class="q">What we would change</span>
       <p>We would put emissions reduction at the centre of the plan and treat the other actions as ways to slow the loop down while that happens. We would also want a lot more testing before using any of these methods at a large scale.</p>
     </div>
@@ -487,7 +485,7 @@
   <div class="wrap">
     <h2>The loop is self-reinforcing. It is not unbreakable.</h2>
     <p>Every step that gets interrupted, whether by reflecting light, freezing carbon, or cutting emissions, slows the cycle down and gives the rest of the planet more time.</p>
-    <div class="sig">Arctic Feedback Loop · Biology · Chemistry · Physics · Action Plan</div>
+    <div class="sig">Arctic Feedback Loop &middot; Biology &middot; Chemistry &middot; Physics &middot; Action Plan</div>
   </div>
 </footer>
 
@@ -524,44 +522,56 @@
       ticking = true;
     }
   });
-  tick(); // Run once on load
 
-  // --- NEW PROFESSIONAL API ADDITION ---
-  // Using Open-Meteo to fetch live weather data for Longyearbyen, Svalbard (High Arctic)
-  // This is a free, open-source weather API that does not require a key.
-  async function fetchArcticWeather() {
-    const weatherContainer = document.getElementById('live-weather');
+  // Fetch Live Weather API for Svalbard
+  async function fetchArcticData() {
+    const weatherUI = document.getElementById('live-weather');
     try {
-      // Fetching current weather data (temperature and windspeed)
-      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=78.22&longitude=15.65&current_weather=true');
-      
-      if (!res.ok) throw new Error('Weather data unavailable');
-      
-      const data = await res.json();
+      const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=78.22&longitude=15.65&current_weather=true');
+      const data = await response.json();
       const temp = data.current_weather.temperature;
       const wind = data.current_weather.windspeed;
-      
-      // Update the status bar with the live data
-      weatherContainer.innerHTML = `
-        <span>Svalbard Station (78.2&deg;N 15.6&deg;E)</span> 
-        <span>&middot;</span> 
-        <span>Temp: ${temp}&deg;C</span> 
-        <span>&middot;</span> 
-        <span>Wind: ${wind} km/h</span>
-      `;
-    } catch (e) {
-      // Fallback in case the API is blocked or down
-      console.error(e);
-      weatherContainer.innerHTML = `
-        <span>Lat 78.9&deg;N &nbsp; Lon 11.9&deg;E</span>
-        <span>&middot;</span>
-        <span>Sea-ice extent: declining</span>
-      `;
+      weatherUI.innerHTML = `Svalbard Station: <b style="color:var(--cyan)">${temp}&deg;C</b> &nbsp;&middot;&nbsp; Wind: <b>${wind} km/h</b>`;
+    } catch (error) {
+      weatherUI.innerHTML = 'Data feed currently offline';
     }
   }
+  fetchArcticData();
 
-  // Call the function on load
-  fetchArcticWeather();
+  // Initialize Interactive Polar Map
+  const map = L.map('polar-map', { 
+    scrollWheelZoom: false,
+    zoomControl: false
+  }).setView([72.0, -40.0], 2);
+  
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // CartoDB Dark Matter tile layer
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 20
+  }).addTo(map);
+
+  // Custom styling for map markers
+  const cyanMarker = L.divIcon({
+    className: 'pulse-marker',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
+  });
+
+  // Scale 1: Local
+  L.marker([72.0, -140.0], {icon: cyanMarker}).addTo(map)
+    .bindPopup("<b>Local Scale</b><p>Beaufort Sea & Greenland. Melting ice exposes dark ocean and bare ground to sunlight.</p>");
+
+  // Scale 2: Regional
+  L.marker([65.0, -100.0], {icon: cyanMarker}).addTo(map)
+    .bindPopup("<b>Regional Scale</b><p>Northern Tundra. Thawing permafrost releases large amounts of carbon dioxide and methane.</p>");
+
+  // Scale 3: Global
+  L.marker([78.22, 15.65], {icon: cyanMarker}).addTo(map)
+    .bindPopup("<b>Global Scale</b><p>Svalbard Station. The Arctic warms four times faster than the rest of the planet.</p>");
+
 </script>
 </body>
 </html>
