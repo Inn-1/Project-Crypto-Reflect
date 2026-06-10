@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arctic Feedback Loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#06121F;
+    --ocean:#0B2034;
+    --ocean2:#0E2A41;
+    --panel:#0A1D30;
+    --text:#BFD4E1;
+    --bright:#EAF4FA;
+    --ice:#DCEAF2;
+    --cyan:#5FD0DE;
+    --warm:#F2A24E;
+    --hot:#E8643C;
+    --mute:#6E8DA1;
+    --grid:rgba(95,208,222,.10);
+    --line:rgba(125,165,190,.18);
+    --display:"Archivo",sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"Space Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--void);
+    color:var(--text);
+    font-family:var(--body);
+    font-size:1.07rem;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--cyan);color:var(--void)}
+  img{max-width:100%}
+
+  /* ---------- top status bar ---------- */
+  .statusbar{
+    position:fixed;top:0;left:0;width:100%;z-index:60;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:11px 22px;font-family:var(--mono);font-size:.66rem;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+    background:rgba(6,18,31,.72);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line)}
+  .statusbar .dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+    background:var(--cyan);margin-right:7px;vertical-align:middle;
+    box-shadow:0 0 8px var(--cyan)}
+  .statusbar b{color:var(--ice);font-weight:400}
+  .statusbar .right{color:var(--mute)}
+  @media(max-width:620px){.statusbar .right{display:none}}
+
+  /* ---------- depth telemetry rail ---------- */
+  .rail{position:fixed;left:0;top:0;height:100vh;width:78px;z-index:40;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    pointer-events:none}
+  .rail-cap{font-family:var(--mono);font-size:.58rem;color:var(--mute);
+    writing-mode:vertical-rl;letter-spacing:.32em;text-transform:uppercase;margin-bottom:16px}
+  .rail-line{position:relative;height:58vh;width:1px;background:var(--line)}
+  .rail-tick{position:absolute;left:-3px;width:6px;height:1px;background:var(--line)}
+  .rail-dot{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);
+    width:8px;height:8px;border-radius:50%;background:var(--cyan);
+    box-shadow:0 0 0 4px rgba(95,208,222,.16);transition:top .12s linear}
+  .rail-read{font-family:var(--mono);font-size:.64rem;color:var(--mute);
+    margin-top:16px;text-align:center;letter-spacing:.03em}
+  .rail-read b{display:block;color:var(--ice);font-size:.92rem;font-weight:700}
+  @media(max-width:960px){.rail{display:none}}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:840px;margin:0 auto;padding:0 26px}
+  @media(min-width:961px){.wrap{padding-left:78px}}
+  section{padding:clamp(74px,10vw,128px) 0;position:relative}
+
+  .fig{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--cyan);display:flex;gap:13px;align-items:center;
+    margin-bottom:18px}
+  .fig::before{content:"";width:22px;height:1px;background:var(--cyan);opacity:.7}
+
+  h2{font-family:var(--display);font-weight:700;line-height:1.05;
+    font-size:clamp(1.9rem,4.8vw,3rem);letter-spacing:-.015em;color:var(--bright);
+    margin-bottom:1.3rem;max-width:18ch}
+  h3{font-family:var(--display);font-weight:600;font-size:1.28rem;
+    color:var(--ice);margin-bottom:.5rem;letter-spacing:-.005em}
+  p{margin-bottom:1.1rem;max-width:65ch}
+  .lead{font-size:1.22rem;color:var(--ice);line-height:1.6}
+  strong{color:var(--cyan);font-weight:600}
+  a{color:var(--cyan)}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;min-height:100vh;display:flex;align-items:flex-end;
+    padding-bottom:clamp(50px,8vh,90px);padding-top:120px;overflow:hidden}
+  .scene{position:absolute;inset:0;z-index:0}
+  .scene svg{width:100%;height:100%;display:block}
+  .hero-grid{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:84px 84px;
+    -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 30%,transparent 100%);
+            mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 30%,transparent 100%)}
+  .hero .wrap{position:relative;z-index:3}
+  .hero h1{font-family:var(--display);font-weight:800;
+    font-size:clamp(2.6rem,7.5vw,5.4rem);line-height:.98;letter-spacing:-.03em;
+    color:#fff;margin-bottom:1.3rem}
+  .hero h1 em{font-style:normal;color:var(--cyan)}
+  .hero-sub{font-size:clamp(1.08rem,2vw,1.32rem);color:var(--ice);
+    max-width:52ch;line-height:1.55}
+  .readouts{margin-top:40px;display:flex;flex-wrap:wrap;gap:26px 44px;
+    font-family:var(--mono);font-size:.72rem;color:var(--mute);
+    letter-spacing:.04em;text-transform:uppercase}
+  .readouts span b{display:block;font-family:var(--display);color:#fff;
+    font-size:1.7rem;font-weight:800;letter-spacing:-.02em;margin-bottom:2px}
+  .readouts span b small{font-size:.95rem;font-weight:600}
+
+  /* ---------- scales table ---------- */
+  .scales{border:1px solid var(--line);margin-top:6px}
+  .scale{display:grid;grid-template-columns:150px 1fr;gap:0;
+    border-bottom:1px solid var(--line)}
+  .scale:last-child{border-bottom:none}
+  .scale .where{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--cyan);padding:22px 22px;
+    border-right:1px solid var(--line);background:rgba(95,208,222,.03)}
+  .scale .what{padding:22px 24px;color:var(--text);font-size:1rem}
+  @media(max-width:640px){.scale{grid-template-columns:1fr}
+    .scale .where{border-right:none;border-bottom:1px solid var(--line);padding-bottom:8px}
+    .scale .what{padding-top:14px}}
+
+  /* ---------- impacts ---------- */
+  .impacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:10px}
+  .impact{padding-top:18px;border-top:2px solid var(--cyan)}
+  .impact h3{font-size:1.08rem;margin-bottom:7px}
+  .impact p{font-size:.96rem;color:var(--mute);margin-bottom:0;line-height:1.62}
+  @media(max-width:720px){.impacts{grid-template-columns:1fr;gap:8px}
+    .impact{padding-bottom:18px}}
+
+  /* ---------- mechanism (loop) ---------- */
+  .band{background:var(--ocean)}
+  .band .what,.band .where{background:transparent}
+  .loopwrap{display:grid;grid-template-columns:1fr .92fr;gap:46px;align-items:center;margin-top:8px}
+  @media(max-width:720px){.loopwrap{grid-template-columns:1fr;gap:30px}}
+  .loopdiagram{width:100%;max-width:340px;margin:0 auto;display:block}
+  .loopnode{fill:rgba(95,208,222,.06);stroke:var(--cyan);stroke-width:1}
+  .loopdiagram .nlabel{font-family:var(--mono);fill:var(--ice);font-size:10.5px;letter-spacing:.02em}
+  .loopdiagram .core{font-family:var(--display);font-weight:700;fill:#fff}
+  .loopdiagram .coresub{font-family:var(--mono);fill:var(--cyan);font-size:9px;letter-spacing:.1em}
+  .arc{fill:none;stroke:var(--warm);stroke-width:1.5}
+
+  /* ---------- disciplines ---------- */
+  .disc{margin-top:6px;border-top:1px solid var(--line)}
+  .disc-row{display:grid;grid-template-columns:140px 1fr;gap:0;border-bottom:1px solid var(--line)}
+  .disc-key{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--cyan);padding:30px 22px;border-right:1px solid var(--line)}
+  .disc-key span{color:var(--mute);display:block;margin-top:3px;font-size:.66rem;letter-spacing:.08em}
+  .disc-body{padding:28px 6px 30px 30px}
+  .disc-body p{font-size:1rem;margin-bottom:.7rem}
+  .disc-body p:last-child{margin-bottom:0}
+  .chain{font-family:var(--mono);font-size:.78rem;color:var(--warm);letter-spacing:.02em;
+    display:block;margin:8px 0;line-height:1.8}
+  .eq{font-family:var(--mono);font-size:.86rem;background:rgba(95,208,222,.05);
+    border:1px solid var(--line);padding:9px 13px;display:inline-block;color:var(--ice);margin:.1rem 0 .8rem}
+  @media(max-width:720px){.disc-row{grid-template-columns:1fr}
+    .disc-key{border-right:none;border-bottom:1px solid var(--line);padding:20px 22px 8px}
+    .disc-body{padding:16px 6px 26px}}
+
+  /* ---------- action plan ---------- */
+  .actions{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin-top:6px}
+  @media(max-width:720px){.actions{grid-template-columns:1fr}}
+  .action{padding:32px 28px}
+  .action+.action{border-left:1px solid var(--line)}
+  @media(max-width:720px){.action+.action{border-left:none;border-top:1px solid var(--line)}}
+  .action .idx{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--warm)}
+  .action h3{margin:.5rem 0 .7rem;font-size:1.26rem}
+  .action p{font-size:.98rem;color:var(--text);margin-bottom:.8rem}
+  .action .sub{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--cyan);display:block;margin-bottom:3px}
+
+  .timeline{margin-top:38px;border-top:1px solid var(--line)}
+  .phase{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--line);padding:24px 0}
+  .phase .when{font-family:var(--mono);font-size:.82rem;color:var(--warm);letter-spacing:.03em}
+  .phase .when span{display:block;color:var(--mute);font-size:.66rem;text-transform:uppercase;
+    letter-spacing:.12em;margin-top:4px}
+  .phase p{margin-bottom:0;font-size:1rem;color:var(--text)}
+  @media(max-width:600px){.phase{grid-template-columns:1fr;gap:8px}}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:38px;margin-top:46px}
+  @media(max-width:680px){.twocol{grid-template-columns:1fr;gap:26px}}
+  .twocol p{margin-bottom:0;font-size:1rem}
+
+  /* ---------- reflection ---------- */
+  .reflect .lead{margin-bottom:1.6rem}
+  .reflect .q{font-family:var(--display);font-weight:600;color:var(--ice);
+    font-size:1.06rem;display:block;margin-top:1.5rem;margin-bottom:.35rem}
+
+  /* ---------- footer ---------- */
+  footer{background:var(--void);border-top:1px solid var(--line);padding:78px 0 56px}
+  footer h2{max-width:20ch}
+  footer p{color:var(--mute)}
+  footer .sig{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--cyan);margin-top:26px;padding-top:20px;
+    border-top:1px solid var(--line)}
+
+  /* ---------- reveal ---------- */
+  .rise{opacity:0;transform:translateY(22px);
+    transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+  .rise.in{opacity:1;transform:none}
+
+  /* ---------- scene animation ---------- */
+  .berg{transform-origin:center;animation:bob 11s ease-in-out infinite alternate}
+  .berg2{transform-origin:center;animation:bob2 13s ease-in-out infinite alternate}
+  @keyframes bob{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+  @keyframes bob2{from{transform:translateY(2px)}to{transform:translateY(-7px)}}
+  .drip{animation:fall 3.6s ease-in infinite}
+  .drip2{animation:fall 4.4s ease-in infinite .8s}
+  .drip3{animation:fall 5s ease-in infinite 1.9s}
+  @keyframes fall{0%{transform:translateY(0);opacity:0}
+    12%{opacity:.9}70%{opacity:.9}100%{transform:translateY(60px);opacity:0}}
+  .shimmer{animation:sh 7s ease-in-out infinite alternate}
+  @keyframes sh{from{opacity:.18}to{opacity:.4}}
+
+  @media(prefers-reduced-motion:reduce){
+    .rise{opacity:1;transform:none;transition:none}
+    .berg,.berg2,.drip,.drip2,.drip3,.shimmer{animation:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <div><span class="dot"></span><b>Arctic Observation</b> &nbsp;·&nbsp; Climate Feedback Study</div>
+  <div class="right">Lat 78.9&deg;N &nbsp; Lon 11.9&deg;E &nbsp;·&nbsp; Sea-ice extent: declining</div>
+</div>
+
+<div class="rail" aria-hidden="true">
+  <div class="rail-cap">Depth below surface</div>
+  <div class="rail-line" id="rail"><div class="rail-dot" id="dot" style="top:0"></div></div>
+  <div class="rail-read"><b id="depthval">0</b>metres</div>
+</div>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="top">
+  <div class="scene" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0A1B2B"/>
+          <stop offset="0.55" stop-color="#0C2438"/>
+          <stop offset="1" stop-color="#103149"/>
+        </linearGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0C2A41"/>
+          <stop offset="1" stop-color="#05101B"/>
+        </linearGradient>
+        <linearGradient id="iceTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FBFEFF"/>
+          <stop offset="1" stop-color="#C2DBE8"/>
+        </linearGradient>
+        <linearGradient id="iceLow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#9FC6D8"/>
+          <stop offset="1" stop-color="#37718E"/>
+        </linearGradient>
+        <radialGradient id="sun" cx="0.82" cy="0.18" r="0.5">
+          <stop offset="0" stop-color="#F4C98A" stop-opacity="0.55"/>
+          <stop offset="0.5" stop-color="#F2A24E" stop-opacity="0.12"/>
+          <stop offset="1" stop-color="#F2A24E" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <rect width="1440" height="520" fill="url(#sky)"/>
+      <rect width="1440" height="900" y="0" fill="url(#sun)"/>
+      <!-- distant shelf -->
+      <path d="M0 470 L210 452 L360 470 L560 448 L760 470 L980 455 L1200 470 L1440 458 L1440 520 L0 520 Z"
+            fill="#16384F" opacity="0.6"/>
+      <!-- ocean -->
+      <rect y="520" width="1440" height="380" fill="url(#sea)"/>
+      <!-- water shimmer lines -->
+      <g stroke="#5FD0DE" stroke-width="1" class="shimmer">
+        <line x1="120" y1="560" x2="430" y2="560" opacity="0.5"/>
+        <line x1="900" y1="585" x2="1230" y2="585" opacity="0.4"/>
+        <line x1="520" y1="615" x2="760" y2="615" opacity="0.3"/>
+      </g>
+
+      <!-- main iceberg -->
+      <g class="berg">
+        <!-- submerged mass -->
+        <path d="M610 520 L470 760 L560 860 L820 880 L960 720 L880 520 Z" fill="url(#iceLow)" opacity="0.55"/>
+        <path d="M880 520 L960 720 L820 880 L880 760 Z" fill="#2C5C77" opacity="0.5"/>
+        <!-- above water -->
+        <path d="M600 520 L660 360 L720 430 L790 330 L860 520 Z" fill="url(#iceTop)"/>
+        <path d="M790 330 L860 520 L760 520 Z" fill="#AECDDD" opacity="0.7"/>
+        <path d="M660 360 L600 520 L690 520 Z" fill="#D7E8F1"/>
+        <!-- drips -->
+        <ellipse class="drip"  cx="640" cy="522" rx="3" ry="5" fill="#9FD2DE"/>
+        <ellipse class="drip2" cx="820" cy="522" rx="3" ry="5" fill="#9FD2DE"/>
+      </g>
+
+      <!-- second smaller berg -->
+      <g class="berg2">
+        <path d="M1050 520 L1010 660 L1110 720 L1230 660 L1200 520 Z" fill="url(#iceLow)" opacity="0.4"/>
+        <path d="M1060 520 L1095 430 L1140 470 L1180 420 L1210 520 Z" fill="url(#iceTop)"/>
+        <path d="M1140 470 L1210 520 L1150 520 Z" fill="#AECDDD" opacity="0.7"/>
+        <ellipse class="drip3" cx="1120" cy="522" rx="2.6" ry="4.5" fill="#9FD2DE"/>
+      </g>
+    </svg>
+  </div>
+  <div class="hero-grid" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <h1 class="rise in">The Arctic is warming<br><em>four times faster</em><br>than the rest of Earth.</h1>
+    <p class="hero-sub rise in">When sea ice melts, the dark water underneath soaks up the heat that the ice used to reflect away. The warmer water melts more ice, and the cycle keeps going. This is the Arctic feedback loop, and what happens here changes the climate everywhere.</p>
+    <div class="readouts rise in">
+      <span><b>4&times;</b>warming rate vs. global average</span>
+      <span><b>85<small>%</small></b>sunlight reflected by sea ice</span>
+      <span><b>2</b>feedback loops examined</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ PROBLEM ============ -->
+<section id="problem">
+  <div class="wrap">
+    <div class="fig rise">Fig. 01 — The problem</div>
+    <h2 class="rise">What the loop is, and where it happens</h2>
+    <p class="rise lead">An Arctic feedback loop is a cycle where warming causes changes that lead to even more warming.</p>
+    <p class="rise">It begins with reflection. Snow and ice are bright, so they send most of the sunlight that hits them back out to space. As they melt, they uncover the much darker land and ocean underneath, and those darker surfaces absorb the sunlight as heat instead. That heat melts more ice, which uncovers more dark surface, which absorbs more heat. Each turn of the cycle makes the next one a little easier.</p>
+    <p class="rise">Melting ice is not the only cause. Thawing permafrost, extra water vapour in the air, and the release of greenhouse gases all add heat to the same loop. The problem is happening at three scales at once.</p>
+
+    <div class="scales rise">
+      <div class="scale"><div class="where">Local</div><div class="what">Along Arctic coastlines, the Beaufort Sea, and the Greenland Ice Sheet, reflective ice and glaciers melt and expose the dark ocean and bare ground beneath them.</div></div>
+      <div class="scale"><div class="where">Regional</div><div class="what">Permafrost thaws across northern Canada, Alaska, and Russia. As the frozen ground decays, it releases large amounts of carbon dioxide and methane.</div></div>
+      <div class="scale"><div class="where">Global</div><div class="what">The Arctic warms about four times faster than the rest of the planet, and that imbalance changes weather and ocean patterns far beyond the poles.</div></div>
+    </div>
+
+    <div class="impacts" style="margin-top:46px">
+      <div class="impact rise"><h3>Ecosystems</h3><p>Melting ice destroys habitat for polar bears and seals and removes the ice algae that the whole marine food web is built on. Thawing permafrost also releases methane, which traps far more heat than carbon dioxide in the short term.</p></div>
+      <div class="impact rise"><h3>People</h3><p>For Arctic Indigenous communities, losing stable ice threatens hunting and travel routes that have been used for generations. Further away, the meltwater raises sea levels, and the people most at risk often did the least to cause the warming.</p></div>
+      <div class="impact rise"><h3>Technology</h3><p>Geoengineering ideas like Project Cryo-Reflect could help, but they are hard to build at scale. There is also a risk that a promising technology becomes an excuse to stop cutting emissions, which is the real problem.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MECHANISM ============ -->
+<section class="band" id="loop">
+  <div class="wrap">
+    <div class="fig rise">Fig. 02 — The mechanism</div>
+    <h2 class="rise">The ice-albedo loop, step by step</h2>
+    <div class="loopwrap">
+      <div class="rise">
+        <p><strong>Albedo</strong> is just a measure of how reflective a surface is. Sea ice has high albedo and works like a mirror. Dark ocean water has low albedo and behaves more like a sponge for heat.</p>
+        <p>The reason this loop is so dangerous is that nothing in it pushes back. Once the melting starts, every step makes the next step happen more easily. The same pattern shows up in the permafrost-carbon loop, where warming wakes up soil microbes that release carbon, which causes more warming. To slow either loop, you have to interrupt one of its steps before it feeds the next one.</p>
+      </div>
+      <div class="rise">
+        <svg class="loopdiagram" viewBox="0 0 320 320" role="img" aria-label="Diagram of the ice-albedo feedback loop">
+          <circle cx="160" cy="160" r="56" fill="none" stroke="rgba(95,208,222,.3)" stroke-width="1"/>
+          <text class="core" x="160" y="155" text-anchor="middle" font-size="15">WARMING</text>
+          <text class="coresub" x="160" y="172" text-anchor="middle">SELF-REINFORCING</text>
+
+          <rect class="loopnode" x="120" y="8"  width="80" height="38" rx="3"/>
+          <text class="nlabel" x="160" y="25" text-anchor="middle">ice &amp; snow</text>
+          <text class="nlabel" x="160" y="39" text-anchor="middle">melt</text>
+
+          <rect class="loopnode" x="234" y="141" width="80" height="38" rx="3"/>
+          <text class="nlabel" x="274" y="158" text-anchor="middle">dark water</text>
+          <text class="nlabel" x="274" y="172" text-anchor="middle">exposed</text>
+
+          <rect class="loopnode" x="120" y="274" width="80" height="38" rx="3"/>
+          <text class="nlabel" x="160" y="291" text-anchor="middle">more heat</text>
+          <text class="nlabel" x="160" y="305" text-anchor="middle">absorbed</text>
+
+          <rect class="loopnode" x="6" y="141" width="80" height="38" rx="3"/>
+          <text class="nlabel" x="46" y="158" text-anchor="middle">albedo</text>
+          <text class="nlabel" x="46" y="172" text-anchor="middle">drops</text>
+
+          <path class="arc" d="M203 32 A150 150 0 0 1 300 139" marker-end="url(#ah)"/>
+          <path class="arc" d="M300 181 A150 150 0 0 1 203 286" marker-end="url(#ah)"/>
+          <path class="arc" d="M117 286 A150 150 0 0 1 20 181" marker-end="url(#ah)"/>
+          <path class="arc" d="M20 139 A150 150 0 0 1 117 32" marker-end="url(#ah)"/>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0 0 L10 5 L0 10 z" fill="#F2A24E"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DISCIPLINES ============ -->
+<section id="science">
+  <div class="wrap">
+    <div class="fig rise">Fig. 03 — Three sciences</div>
+    <h2 class="rise">One problem, read three ways</h2>
+    <p class="rise">No single subject explains the Arctic on its own. Biology shows how the damage spreads through living things, chemistry explains why the gases trap heat, and physics explains the light and energy that start the whole process and gives us the tools to watch it.</p>
+
+    <div class="disc rise">
+      <div class="disc-row">
+        <div class="disc-key">Biology<span>Ecosystems</span></div>
+        <div class="disc-body">
+          <h3>Damage that climbs the food web</h3>
+          <p>Ice algae grow under the sea ice and feed almost everything in the Arctic ocean. As the ice retreats they lose their home, and the base of the food web thins out. Warming also shifts the timing of the spring bloom, so zooplankton hatch and find their food already gone. Scientists call this a trophic mismatch.</p>
+          <span class="chain">ice algae &rarr; zooplankton &rarr; Arctic cod &rarr; seals &rarr; polar bears</span>
+          <p>The strain reaches all the way to the top. Female polar bears that cannot store enough fat struggle to carry a pregnancy. The biological responses work with the system rather than against it: bringing back grazing herds, protecting peatlands, and conserving the marine life that stores carbon and feeds the food web at the same time.</p>
+        </div>
+      </div>
+      <div class="disc-row">
+        <div class="disc-key">Chemistry<span>Reactions</span></div>
+        <div class="disc-body">
+          <h3>Why the gases hold heat</h3>
+          <p>Burning fossil fuels and thawing permafrost both add greenhouse gases to the air. Carbon dioxide and water vapour absorb the heat radiating off Earth and send it back in every direction, which acts like a blanket around the planet.</p>
+          <span class="eq">CH&#8324; + 2O&#8322; &rarr; CO&#8322; + 2H&#8322;O + energy</span>
+          <p>Methane is the bigger danger in the short term, because it traps much more heat than carbon dioxide before it breaks down after about ten to twelve years. The chemical solutions are carbon capture, which uses amine liquids to trap carbon dioxide at the source, and hydrogen fuel cells, which make electricity and leave only water behind.</p>
+        </div>
+      </div>
+      <div class="disc-row">
+        <div class="disc-key">Physics<span>Light &amp; optics</span></div>
+        <div class="disc-body">
+          <h3>Measuring and bending the light</h3>
+          <p>Optics is how we keep watch on the loop. Satellites like the European Space Agency&rsquo;s Sentinel-3 track how the Arctic&rsquo;s reflectivity is changing, and the GRACE-FO mission uses lasers to measure the Greenland Ice Sheet losing mass.</p>
+          <p>Optics also offers a way to act. Spreading reflective silica over thin ice raises its albedo, and on land, solar thermal collectors, solar panels, and a renewable grid cut the emissions that drive the warming in the first place.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ACTION PLAN ============ -->
+<section class="band" id="action">
+  <div class="wrap">
+    <div class="fig rise">Fig. 04 — The action plan</div>
+    <h2 class="rise">Two actions, one for each loop</h2>
+    <p class="rise">The plan works on both feedback loops at the same time. One action restores the Arctic&rsquo;s reflectivity, and the other keeps its buried carbon frozen. Neither one replaces cutting emissions. They are meant to slow things down while that harder work goes on.</p>
+
+    <div class="actions">
+      <div class="action rise">
+        <div class="idx">Action 01 — Ice-albedo loop</div>
+        <h3>Project Cryo-Reflect</h3>
+        <p>Spread a thin layer of tiny hollow glass beads, made from silica, across young and thin sea ice. The beads reflect sunlight back toward space before the dark water beneath can absorb it. In effect, they replace some of the reflective surface the Arctic is losing.</p>
+        <span class="sub">Why it works</span>
+        <p>Fresh sea ice reflects up to 85 percent of the sunlight that reaches it, while open water absorbs most of it. Raising the reflectivity of the thinnest, most vulnerable ice slows the melt before it can speed itself up.</p>
+        <span class="sub">What we expect</span>
+        <p>Treated areas should hold their ice longer through summer and give it a chance to thicken, with satellites measuring the difference. It is a regional measure, not a cure.</p>
+      </div>
+      <div class="action rise">
+        <div class="idx">Action 02 — Permafrost-carbon loop</div>
+        <h3>Keeping the ground frozen</h3>
+        <p>Use living systems to protect the permafrost. Large grazing animals like reindeer and musk oxen pack down the winter snow, which lets the cold reach the soil. Protecting and rewetting peatlands keeps their soil waterlogged so the carbon inside stays locked away.</p>
+        <span class="sub">Why it works</span>
+        <p>Deep snow acts like a blanket and keeps the ground warmer than the air. Trampling it removes that blanket. Waterlogged peat has almost no oxygen, so the dead plants in it never fully break down. Both methods stop carbon from escaping in the first place.</p>
+        <span class="sub">What we expect</span>
+        <p>Carbon and methane stay in the ground, and the tundra and peatland stay healthy. Once it is set up, this approach mostly looks after itself.</p>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="phase rise"><div class="when">0&ndash;2 years<span>Short term</span></div><p>Run small, carefully monitored bead trials with full environmental safety testing, and protect the peatlands that are still intact before they can be drained.</p></div>
+      <div class="phase rise"><div class="when">2&ndash;5 years<span>Medium term</span></div><p>If the trials are safe and they work, expand them with automated systems, grow the herbivore projects, and start rewetting drained peatlands, comparing treated areas with untreated ones by satellite.</p></div>
+      <div class="phase rise"><div class="when">5+ years<span>Long term</span></div><p>Tie everything to a shift toward renewable energy that cuts emissions and black carbon, so reflectivity, permafrost, and clean power all support each other.</p></div>
+    </div>
+
+    <div class="twocol">
+      <div class="rise"><h3>What it needs</h3><p>Funding for manufacturing, deployment, and satellite monitoring. Engineers, ecologists, and climate scientists working together. Land access and long-term monitoring for the biological side.</p></div>
+      <div class="rise"><h3>Who is involved</h3><p>Arctic Indigenous communities are partners from the start. Their knowledge of local ice and land guides where to act, and as the people most affected, they have a real say in anything placed in their region.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REFLECTION ============ -->
+<section id="reflection">
+  <div class="wrap reflect">
+    <div class="fig rise">Fig. 05 — Reflection</div>
+    <h2 class="rise">What we took away</h2>
+    <p class="rise lead">The biggest thing we learned is that no single subject could explain this problem by itself, and that the most honest plans are the ones that admit what they cannot do.</p>
+    <div class="rise">
+      <span class="q">Bringing the subjects together</span>
+      <p>Physics explained why the ice reflects sunlight and why losing it matters so much. Chemistry explained why methane and carbon dioxide trap heat. Biology showed how the damage moves through the food web, from ice algae up to polar bears. The picture only made sense once we put all three side by side.</p>
+      <span class="q">What was difficult</span>
+      <p>A lot of the science is still uncertain. The silica beads are experimental, and no one fully knows yet whether they could harm marine life, so it was hard to write about them with much confidence. It was also tempting to treat one idea as the whole answer, which it is not.</p>
+      <span class="q">What we realised</span>
+      <p>The solutions that make the most sense work with the Arctic&rsquo;s natural systems instead of fighting them. We also saw how easily a new technology can become a reason to stop cutting emissions, when cutting emissions is still the most important thing we can do.</p>
+      <span class="q">What we would change</span>
+      <p>We would put emissions reduction at the centre of the plan and treat the other actions as ways to slow the loop down while that happens. We would also want a lot more testing before using any of these methods at a large scale.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <h2>The loop is self-reinforcing. It is not unbreakable.</h2>
+    <p>Every step that gets interrupted, whether by reflecting light, freezing carbon, or cutting emissions, slows the cycle down and gives the rest of the planet more time.</p>
+    <div class="sig">Arctic Feedback Loop · Biology · Chemistry · Physics · Action Plan</div>
+  </div>
+</footer>
+
+<script>
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.14,rootMargin:'0px 0px -7% 0px'});
+  document.querySelectorAll('.rise:not(.in)').forEach(el=>io.observe(el));
+
+  const dot=document.getElementById('dot');
+  const rail=document.getElementById('rail');
+  const read=document.getElementById('depthval');
+  const MAX_DEPTH=1240;
+  let ticking=false;
+  function tick(){
+    ticking=false;
+    const h=document.documentElement;
+    const p=Math.min(1,Math.max(0,h.scrollTop/((h.scrollHeight-h.clientHeight)||1)));
+    if(rail) dot.style.top=(p*rail.offsetHeight)+'px';
+    read.textContent=Math.round(p*MAX_DEPTH);
+  }
+  addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(tick);ticking=true;}},{passive:true});
+  addEventListener('resize',tick);
+  if(rail){for(let i=1;i<8;i++){const t=document.createElement('div');t.className='rail-tick';t.style.top=(i*12.5)+'%';rail.appendChild(t);}}
+  tick();
+</script>
+</body>
+</html>
+
